@@ -1,5 +1,5 @@
 {
-  "name": "wordnik",
+  "name": "wordnik-app",
   "version": "1.0.0",
   "description": "Sample Command Line App",
   "main": "app.js",
@@ -9,6 +9,7 @@
   "author": "Madhukar M Mallia",
   "license": "ISC",
   "dependencies": {
-    "prompt": "^0.2.14"
+    "commander": "^2.8.1",
+    "wordnik": "0.0.2"
   }
 }

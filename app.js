@@ -1,24 +1,21 @@
-var prompt = require('prompt');
+#!/usr/bin/env node
 
-var schema = {
-  properties: {
-    name: {
-    	description: 'Enter your name',
-      pattern: /^[a-zA-Z\s\-]+$/,
-      message: 'Name must be only letters, spaces, or dashes',
-      required: true
-    },
-    password: {
-    	description: 'Enter your password',
-      hidden: true
-    }
-  }
-};
+/**
+ * Module dependencies.
+ */
+ 
+var program = require('commander');
+var wordnik = require('wordnik');
 
-prompt.start();
-
-prompt.get(schema, function (err, result) {
-  console.log('Command-line input received:');
-  console.log('  username: ' + result.name);
-  console.log('  email: ' + result.password);
-});
+/* A help guide */
+program
+  .version('0.0.1')
+  .usage('[options] [word]')
+  .option('def <word>', 'Display definitions of a word.')
+  .option('syn <word>', 'Display synonyms of a word.')
+  .option('ant <word>', 'Display antonyms of a word.')
+  .option('ex <word>', 'Display examples of a word.')
+  .option('<word>, dict <word>', 'Display all above details for a word.')
+  .option('word-of-the-day', 'Display all above details of word of the day')
+  .option('play', 'Play the Word Game')
+  .parse(process.argv);
