@@ -29,86 +29,131 @@ program
   .parse(process.argv);
 
 var expression = process.argv[2];
-var givenWord = '';
 
 switch(expression) {
   case 'def':
-    wn.definitions(program.def, function(e, defs) {
-    	if(e) {
-    		console.log(e);
-    	} else {
-        givenWord = program.def;
-        R.forEach(__displayFunction, defs);
-    	}
-    });
+    getDefinition(program.def);
     break;
   case 'syn':
-    wn.relatedWords(program.syn , {
-    	relationshipTypes: 'synonym'
-    }, function(e, word) {
-    	if(e) {
-    		console.log(e);
-    	} else {
-        givenWord = program.syn;
-    		console.log(word);
-    	}
-    });
+    getSynonyms(program.syn);
     break;
   case 'ant':
-    wn.relatedWords(program.ant , {
-    	relationshipTypes: 'antonym'
-    }, function(e, word) {
-    	if(e) {
-    		console.log(e);
-    	} else {
-        givenWord = program.ant;
-    		console.log(word);
-    	}
-    });
+    getAntonyms(program.ant);
     break;
   case 'ex':
-    wn.examples(program.ex, function(e, examples) {
-    	if(e) {
-    		console.log(e);
-    	} else {
-        givenWord = program.ex;
-    		console.log(examples);
-    	}
-    });
+    getExamples(program.ex);
     break;
   case undefined:
-    wn.wordOfTheDay( function(e, word) {
-    	if(e) {
-    		console.log(e);
-    	} else {
-    		console.log(word);
-    	}
-    });
+    getWordOfTheDay();
     break;
   default:
     console.log('default');
     break;
 }
 
-
-function __displayFunction(word) { 
-  console.log(getDescriptionText(expression)[0].blue + ' ' + givenWord.yellow + ': ' + word.text.green);
+function getDefinition(word) {
+  wn.definitions(word, function(e, defs) {
+    if(e) {
+      console.log(e);
+    } else {
+      var definitions = R.pluck('text', defs);
+      intermediateFunction(definitions, program.def);
+    }
+  });
 }
 
+function getSynonyms(word) {
+  wn.relatedWords(word, {
+    relationshipTypes: 'synonym'
+  }, function(e, syns) {
+    if(e) {
+      console.log(e);
+    } else {
+      var synonyms = R.pluck('words', syns);
+      if (R.isNil(synonyms[0])) {
+        intermediateFunction(synonyms, program.syn);
+      } else {
+        intermediateFunction(synonyms[0], program.syn);
+      }
+    }
+  });
+}
+
+function getAntonyms(word) {
+  wn.relatedWords(word , {
+    relationshipTypes: 'antonym'
+  }, function(e, ants) {
+    if(e) {
+      console.log(e);
+    } else {
+      var antonyms = R.pluck('words', ants);
+      if (R.isNil(antonyms[0])) {
+        intermediateFunction(antonyms, program.ant);
+      } else {
+        intermediateFunction(antonyms[0], program.ant);
+      }
+    }
+  });
+}
+
+function getExamples(word) {
+  wn.examples(word, function(e, examples) {
+    if(e) {
+      console.log(e);
+    } else {
+      if (R.isNil(examples.examples)) {
+        intermediateFunction([], program.ex);
+      } else {
+        var examplesArray = R.pluck('text', examples.examples);
+        intermediateFunction(examplesArray, program.ex);
+      }
+    }
+  });
+}
+
+function getWordOfTheDay() {
+  wn.wordOfTheDay(function(e, word) {
+    if(e) {
+      console.log(e);
+    } else {
+      console.log(word);
+    }
+  });
+}
+
+function intermediateFunction(result, userInput) {
+  if ( result.length  < 1 || typeof result === undefined) {
+    console.log(getNoDataMessage(expression)[0].cyan + ' ' + userInput.yellow);
+  } else {
+    console.log(getDescriptionText(expression)[0].blue + ' ' + userInput.yellow + ':');
+    result.forEach (function (value, index) {
+      console.log(R.toString(index + 1).blue + ': '.blue + value.green);
+    });
+  }
+}
+
+var descriptionList = [{
+  'key_word': 'def',
+  'description': 'Definition of the word-',
+  'no_data_present_msg': 'No definition is present for the word-'
+}, {
+  'key_word': 'syn',
+  'description': 'Synonyms of the word-',
+  'no_data_present_msg': 'No synonym is present for the word-'
+}, {
+  'key_word': 'ant',
+  'description': 'Antonyms of the word-',
+  'no_data_present_msg': 'No antonym is present for the word-'
+}, {
+  'key_word': 'ex',
+  'description': 'Examples of the word-',
+  'no_data_present_msg': 'No example is present for the word-'
+}];
+
 function getDescriptionText(option) {
-  var descriptionList = [{
-    'key_word': 'def',
-    'description': 'Definition of the word-'
-  }, {
-    'key_word': 'syn',
-    'description': 'Definition of the word-'
-  }, {
-    'key_word': 'ant',
-    'description': 'Definition of the word-'
-  }, {
-    'key_word': 'ex',
-    'description': 'Definition of the word-'
-  }]
   return R.pluck('description', R.filter(R.propEq('key_word', option), descriptionList));
 }
 
+function getNoDataMessage(option) {
+  return R.pluck('no_data_present_msg', R.filter(R.propEq('key_word', option), descriptionList));
+}
