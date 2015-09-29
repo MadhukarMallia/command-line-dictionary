@@ -7,8 +7,9 @@
 var program = require('commander');
 var Wordnik = require('wordnik');
 var colors = require('colors');
+var R = require('ramda');
 
-var api_key = 'a2a73e7b926c924fad7001ca3111acd55af2ffabf50eb4ae5';
+var api_key = '69cb40606211293cb7e81018c4d0b231e657a10ae78c924c9';
 
 var wn = new Wordnik({
   api_key: api_key
@@ -28,6 +29,7 @@ program
   .parse(process.argv);
 
 var expression = process.argv[2];
+var givenWord = '';
 
 switch(expression) {
   case 'def':
@@ -35,7 +37,8 @@ switch(expression) {
     	if(e) {
     		console.log(e);
     	} else {
-    		console.log(defs);
+        givenWord = program.def;
+        R.forEach(__displayFunction, defs);
     	}
     });
     break;
@@ -46,6 +49,7 @@ switch(expression) {
     	if(e) {
     		console.log(e);
     	} else {
+        givenWord = program.syn;
     		console.log(word);
     	}
     });
@@ -57,6 +61,7 @@ switch(expression) {
     	if(e) {
     		console.log(e);
     	} else {
+        givenWord = program.ant;
     		console.log(word);
     	}
     });
@@ -66,6 +71,7 @@ switch(expression) {
     	if(e) {
     		console.log(e);
     	} else {
+        givenWord = program.ex;
     		console.log(examples);
     	}
     });
@@ -83,3 +89,26 @@ switch(expression) {
     console.log('default');
     break;
 }
+
+
+function __displayFunction(word) { 
+  console.log(getDescriptionText(expression)[0].blue + ' ' + givenWord.yellow + ': ' + word.text.green);
+}
+
+function getDescriptionText(option) {
+  var descriptionList = [{
+    'key_word': 'def',
+    'description': 'Definition of the word-'
+  }, {
+    'key_word': 'syn',
+    'description': 'Definition of the word-'
+  }, {
+    'key_word': 'ant',
+    'description': 'Definition of the word-'
+  }, {
+    'key_word': 'ex',
+    'description': 'Definition of the word-'
+  }]
+  return R.pluck('description', R.filter(R.propEq('key_word', option), descriptionList));
+}
+
