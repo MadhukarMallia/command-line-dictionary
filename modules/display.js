@@ -3,7 +3,12 @@
 var R = require('ramda');
 var colors = require('colors');
 
-var expression = process.argv[2];
+// var expression = process.argv[2];
+
+var display = {
+	intermediateFunction: intermediateFunction,
+	getDescriptionText: getDescriptionText
+};
 
 var descriptionList = [{
   'key_word': 'def',
@@ -22,7 +27,7 @@ var descriptionList = [{
   'description': 'Examples of the word-',
   'no_data_present_msg': 'No example is present for the word-'
 }, {
-  'key_word': 'word_of_day',
+  'key_word': 'wod',
   'description': 'Word of the day is-'
 }, {
   'key_word': 'dict',
@@ -42,13 +47,15 @@ function anotherIntermediateFunction() {
 
 }
 
-exports.intermediateFunction = function(result, userInput) {
-  if ( result.length  < 1 || typeof result === undefined) {
-    console.log(getNoDataMessage(expression)[0].cyan + ' ' + userInput.yellow);
+function intermediateFunction (option, result, userInput) {
+  if (result.length  < 1 || typeof result === undefined) {
+    console.log(getNoDataMessage(option)[0].cyan + ' ' + userInput.yellow);
   } else {
-    console.log(getDescriptionText(expression)[0].blue + ' ' + userInput.yellow + ':');
+    console.log(getDescriptionText(option)[0].blue + ' ' + userInput.yellow + ':');
     result.forEach (function (value, index) {
       console.log(R.toString(index + 1).blue + ': '.blue + value.green);
     });
   }
 };
+
+module.exports = display;

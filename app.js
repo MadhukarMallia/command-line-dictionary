@@ -5,7 +5,7 @@
  */
  
 var program = require('commander');
-var wordnikAPICalls = require('./modules/wordnik_api_calls.js');
+var wordnikAPICalls = require('./modules/calls');
 
 /* A help guide */
 program
@@ -25,22 +25,22 @@ var expression = process.argv[2];
 
 switch(expression) {
   case 'def':
-    wordnikAPICalls.getDefinition(program.def);
+    wordnikAPICalls.getDefinition(expression, program.def);
     break;
   case 'syn':
-    wordnikAPICalls.getSynonyms(program.syn);
+    wordnikAPICalls.getSynonyms(expression, program.syn);
     break;
   case 'ant':
-    wordnikAPICalls.getAntonyms(program.ant);
+    wordnikAPICalls.getAntonyms(expression, program.ant);
     break;
   case 'ex':
-    wordnikAPICalls.getExamples(program.ex);
+    wordnikAPICalls.getExamples(expression, program.ex);
     break;
   case 'dict':
-    wordnikAPICalls.getCompleteDetails(program.dict);
+    wordnikAPICalls.getCompleteDetails(expression, program.dict);
     break;
   case undefined:
-    wordnikAPICalls.getWordOfTheDay();
+    wordnikAPICalls.getWordOfTheDay('wod');
     break;
   default:
     console.log('default');
