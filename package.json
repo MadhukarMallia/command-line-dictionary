@@ -9,6 +9,7 @@
   "author": "Madhukar M Mallia",
   "license": "ISC",
   "dependencies": {
+    "async": "^1.4.2",
     "colors": "^1.1.2",
     "commander": "^2.8.1",
     "ramda": "^0.17.1",
