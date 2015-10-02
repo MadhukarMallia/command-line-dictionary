@@ -3,6 +3,7 @@
 var Wordnik = require('wordnik');
 var R = require('ramda');
 var async = require('async');
+var inquirer = require('inquirer');
 var display = require('./display');
 
 var api_key = '69cb40606211293cb7e81018c4d0b231e657a10ae78c924c9';
@@ -17,7 +18,8 @@ var calls = {
   getAntonyms: getAntonyms,
   getWordOfTheDay: getWordOfTheDay,
   getExamples: getExamples,
-  getCompleteDetails: getCompleteDetails
+  getCompleteDetails: getCompleteDetails,
+  playTheWordGame: playTheWordGame
 };
 
 function getDefinition(option, word) {
@@ -146,5 +148,130 @@ function getCompleteDetails(option, word) {
     console.log((display.getDescriptionText(option)[0]).blue + ' ' + word.yellow);
   });
 };
+
+function playTheWordGame() {
+  wn.randomWord(function(e, word){
+    if (e) {
+      console.log(e);
+    } else {
+      console.log(word.word);
+
+      var hints = [];
+      // hints.word = word.word;
+      hints.word = 'vales'; //check this line. move back to the previous line before submission.
+      async.parallel([
+        function(callback) {
+          wn.definitions(hints.word, function(e, defs) {
+            if (e) {
+              console.log(e);
+            } else {
+              hints.def = R.pluck('text', defs);
+              callback();
+            }
+          });
+        },
+        function(callback) {
+          wn.relatedWords(hints.word, function(e, syn) {
+            if (e) {
+              console.log(e);
+            } else {
+              hints.syn = R.pluck('words', syn)[0];
+              callback();
+            }
+          });
+        },
+        function(callback) {
+          wn.relatedWords(hints.word, function(e, ant) {
+            if (e) {
+              console.log(e);
+            } else {
+              hints.ant = R.pluck('words', ant)[0];
+              callback();
+            }
+          });
+        }
+      ], function() {
+        var functions = ['syn', 'ant', 'def'];
+        var variable = functions[Math.floor(Math.random() * functions.length)];
+
+        if(variable === 'syn' && hints.syn.length > 0) {
+          console.log((display.getDescriptionText(variable)[0]).cyan);
+          hints[variable].forEach (function (value, index) {
+            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
+          });
+          askQuestion(variable, hints);
+        } else if (variable === 'ant' && hints.ant.length > 0) {
+          console.log((display.getDescriptionText(variable)[0]).cyan);
+          hints[variable].forEach (function (value, index) {
+            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
+          });
+          askQuestion(variable, hints);
+        } else {
+          variable = 'def';
+          console.log((display.getDescriptionText(variable)[0]).cyan);
+          hints[variable].forEach (function (value, index) {
+            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
+          });
+          askQuestion(variable, hints);
+        }
+      });
+    }
+  });
+}
+
+function askQuestion(variable, hints) {
+
+  var questions = [
+    {
+      type: "input",
+      name: "answer",
+      message: "What's your answer?",
+      filter: function(val) {
+        return val.toLowerCase();
+      }
+    }
+  ];
+
+  //need to handle the case where a synonym is entered
+  inquirer.prompt(questions, function (answers) {
+    hints.word = hints.word.toLowerCase();
+    if (answers.answer === hints.word) {
+      var appreciationMessage = ["Good!", "Great!", "Awesome!", "Super!", "Nice!"];
+      var message = appreciationMessage[Math.floor(Math.random() * appreciationMessage.length)];
+      console.log((message + ' You entered the correct word!!').green);
+    } else {
+      var wrongWordMessage = ["Oh no!", "Sorry!", "Oh my!"];
+      var message = wrongWordMessage[Math.floor(Math.random() * wrongWordMessage.length)];
+      console.log((message + ' You entered the wrong word!!').red);
+      displayChoiceList(variable, hints);
+    }
+  });
+}
+
+function displayChoiceList(variable, hints) {
+  var questions = [
+    {
+      type: "rawlist",
+      name: "choice",
+      message: "Select an option to continue:",
+      choices: ['Try Again', 'Hint', 'Quit']
+    }
+  ];
+
+  inquirer.prompt(questions, function (answers) {
+    switch (answers.choice) {
+      case 'Try Again':
+        askQuestion(variable, hints);
+        break;
+      case 'Hint':
+        // handle hints.
+        break;
+      case 'Quit':
+        //handle quit with display of correct word,
+        break;
+    };
+  });
+
+}
 
 module.exports = calls;

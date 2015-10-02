@@ -3,8 +3,6 @@
 var R = require('ramda');
 var colors = require('colors');
 
-// var expression = process.argv[2];
-
 var display = {
 	intermediateFunction: intermediateFunction,
 	getDescriptionText: getDescriptionText
@@ -41,10 +39,6 @@ function getDescriptionText(option) {
 
 function getNoDataMessage(option) {
   return R.pluck('no_data_present_msg', R.filter(R.propEq('key_word', option), descriptionList));
-}
-
-function anotherIntermediateFunction() {
-
 }
 
 function intermediateFunction (option, result, userInput) {

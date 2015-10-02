@@ -39,6 +39,9 @@ switch(expression) {
   case 'dict':
     wordnikAPICalls.getCompleteDetails(expression, program.dict);
     break;
+  case 'play':
+    wordnikAPICalls.playTheWordGame();
+    break;
   case undefined:
     wordnikAPICalls.getWordOfTheDay('wod');
     break;
