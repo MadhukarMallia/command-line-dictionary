@@ -264,14 +264,24 @@ function displayChoiceList(variable, hints) {
         askQuestion(variable, hints);
         break;
       case 'Hint':
-        // handle hints.
+        giveHints(variable, hints);
         break;
       case 'Quit':
-        //handle quit with display of correct word,
+        showAnswer(hints);
         break;
     };
   });
+}
 
+function showAnswer(hints) {
+  console.log('Correct word is: '.blue + hints.word.yellow);
+  display.intermediateFunction('def', hints.def, hints.word);
+  display.intermediateFunction('syn', hints.syn, hints.word);
+  display.intermediateFunction('ant', hints.ant, hints.word);
+}
+
+function giveHints(variable, hints) {
+  //deal the functionality
 }
 
 module.exports = calls;
