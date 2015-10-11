@@ -126,7 +126,7 @@ function getWordOfTheDay(option) {
 };
 
 function getCompleteDetails(option, word) {
-  var completeWordDetails = []
+  var completeWordDetails = [];
   async.parallel([
     function(callback) {
       completeWordDetails.synonyms = getSynonyms('syn', word);
@@ -154,7 +154,7 @@ function playTheWordGame() {
     if (e) {
       console.log(e);
     } else {
-      console.log(word.word);
+      console.log(word.word); //change this after completing the app
 
       var hints = [];
       // hints.word = word.word;
@@ -171,52 +171,96 @@ function playTheWordGame() {
           });
         },
         function(callback) {
-          wn.relatedWords(hints.word, function(e, syn) {
-            if (e) {
+          wn.relatedWords(hints.word, {
+            relationshipTypes: 'synonym'
+          }, function(e, syn) {
+            hints.syn = [];
+             if (e) {
               console.log(e);
             } else {
-              hints.syn = R.pluck('words', syn)[0];
+              hints.syn = R.pluck('words', syn)[0] ? R.pluck('words', syn)[0] : [];
               callback();
             }
           });
         },
         function(callback) {
-          wn.relatedWords(hints.word, function(e, ant) {
+          wn.relatedWords(hints.word, {
+            relationshipTypes: 'antonym'
+          }, function(e, ant) {
+            hints.ant = [];
             if (e) {
               console.log(e);
             } else {
-              hints.ant = R.pluck('words', ant)[0];
+              hints.ant = R.pluck('words', ant)[0] ? R.pluck('words', ant)[0] : [];
               callback();
             }
           });
         }
       ], function() {
-        var functions = ['syn', 'ant', 'def'];
-        var variable = functions[Math.floor(Math.random() * functions.length)];
-
-        if(variable === 'syn' && hints.syn.length > 0) {
-          console.log((display.getDescriptionText(variable)[0]).cyan);
-          hints[variable].forEach (function (value, index) {
-            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
-          });
-          askQuestion(variable, hints);
-        } else if (variable === 'ant' && hints.ant.length > 0) {
-          console.log((display.getDescriptionText(variable)[0]).cyan);
-          hints[variable].forEach (function (value, index) {
-            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
-          });
-          askQuestion(variable, hints);
-        } else {
-          variable = 'def';
-          console.log((display.getDescriptionText(variable)[0]).cyan);
-          hints[variable].forEach (function (value, index) {
-            console.log(R.toString(index + 1).blue + ': '.blue + value.green);
-          });
-          askQuestion(variable, hints);
-        }
+        showHint(hints);
       });
     }
   });
+}
+
+function showHint(hints, hintKey) {
+  console.log(hintKey);
+  var functions = ['syn', 'ant', 'def'];
+  var variable = hintKey ? hintKey : getRandomElement(functions);
+
+  if (hints.syn.length < 1 && hints.ant.length < 1 && hints.def.length < 1) {
+    console.log('No more hints. :)'.green);
+    showAnswer(hints);
+  } else {
+    if (variable === 'jumble') {
+      var jumbledWord = scramble();
+      console.log('jumbledWord is ', jumbledWord);
+    }
+    if (variable === 'syn' && hints.syn.length > 0) {
+      var synonym = getRandomElement(hints[variable]);
+
+      console.log((display.getDescriptionText(variable)[0]).cyan);
+      console.log(synonym.green);
+
+      hints[variable].splice(hints[variable].indexOf(synonym), 1);
+      askQuestion(variable, hints);
+    } else if (variable === 'ant' && hints.ant.length > 0) {
+      var antonym = getRandomElement(hints[variable]);
+
+      console.log((display.getDescriptionText(variable)[0]).cyan);
+      console.log(antonym.green);
+
+      hints[variable].splice(hints[variable].indexOf(antonym), 1);
+      askQuestion(variable, hints);
+    } else {
+      variable = 'def';
+      var definition = getRandomElement(hints[variable]);
+
+      console.log((display.getDescriptionText(variable)[0]).cyan);
+      console.log(definition.green);
+
+      hints[variable].splice(hints[variable].indexOf(definition), 1);
+      askQuestion(variable, hints);
+    }
+  }
+}
+
+function scramble(str) {
+  var scrambled = '';
+  var src = str.split('');
+  var randomNum;
+
+  while (src.length > 1) {
+    randomNum = Math.floor(Math.random() * src.length);
+    scrambled += src[randomNum];
+    src.splice(randomNum, 1);
+  }
+  scrambled += src[0];
+  return scrambled;
+}
+
+function getRandomElement(array) {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 function askQuestion(variable, hints) {
@@ -237,11 +281,11 @@ function askQuestion(variable, hints) {
     hints.word = hints.word.toLowerCase();
     if (answers.answer === hints.word) {
       var appreciationMessage = ["Good!", "Great!", "Awesome!", "Super!", "Nice!"];
-      var message = appreciationMessage[Math.floor(Math.random() * appreciationMessage.length)];
+      var message = getRandomElement(appreciationMessage);
       console.log((message + ' You entered the correct word!!').green);
     } else {
       var wrongWordMessage = ["Oh no!", "Sorry!", "Oh my!"];
-      var message = wrongWordMessage[Math.floor(Math.random() * wrongWordMessage.length)];
+      var message = getRandomElement(wrongWordMessage);
       console.log((message + ' You entered the wrong word!!').red);
       displayChoiceList(variable, hints);
     }
@@ -264,7 +308,7 @@ function displayChoiceList(variable, hints) {
         askQuestion(variable, hints);
         break;
       case 'Hint':
-        giveHints(variable, hints);
+        giveHints(hints);
         break;
       case 'Quit':
         showAnswer(hints);
@@ -275,13 +319,15 @@ function displayChoiceList(variable, hints) {
 
 function showAnswer(hints) {
   console.log('Correct word is: '.blue + hints.word.yellow);
-  display.intermediateFunction('def', hints.def, hints.word);
-  display.intermediateFunction('syn', hints.syn, hints.word);
-  display.intermediateFunction('ant', hints.ant, hints.word);
+  getCompleteDetails('dict', hints.word);
 }
 
-function giveHints(variable, hints) {
+function giveHints(hints) {
   //deal the functionality
+  console.log('Hints:'.blue);
+  var keys = ['jumble', 'def', 'syn', 'ant'];
+  var hintKey = getRandomElement(keys);
+  showHint(hints, hintKey);
 }
 
 module.exports = calls;
