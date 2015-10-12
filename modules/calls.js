@@ -6,6 +6,7 @@ var async = require('async');
 var inquirer = require('inquirer');
 var display = require('./display');
 
+var globalFlag = 0;
 var api_key = '69cb40606211293cb7e81018c4d0b231e657a10ae78c924c9';
 
 var wn = new Wordnik({
@@ -154,11 +155,11 @@ function playTheWordGame() {
     if (e) {
       console.log(e);
     } else {
-      console.log(word.word); //change this after completing the app
+      // console.log(word.word); //change this after completing the app
 
       var hints = [];
-      // hints.word = word.word;
-      hints.word = 'vales'; //check this line. move back to the previous line before submission.
+      hints.word = word.word;
+      // hints.word = 'vales'; //check this line. move back to the previous line before submission.
       async.parallel([
         function(callback) {
           wn.definitions(hints.word, function(e, defs) {
@@ -204,59 +205,66 @@ function playTheWordGame() {
 }
 
 function showHint(hints, hintKey) {
-  console.log(hintKey);
   var functions = ['syn', 'ant', 'def'];
   var variable = hintKey ? hintKey : getRandomElement(functions);
 
   if (hints.syn.length < 1 && hints.ant.length < 1 && hints.def.length < 1) {
-    console.log('No more hints. :)'.green);
-    showAnswer(hints);
-  } else {
-    if (variable === 'jumble') {
-      var jumbledWord = scramble();
-      console.log('jumbledWord is ', jumbledWord);
-    }
-    if (variable === 'syn' && hints.syn.length > 0) {
-      var synonym = getRandomElement(hints[variable]);
-
-      console.log((display.getDescriptionText(variable)[0]).cyan);
-      console.log(synonym.green);
-
-      hints[variable].splice(hints[variable].indexOf(synonym), 1);
-      askQuestion(variable, hints);
-    } else if (variable === 'ant' && hints.ant.length > 0) {
-      var antonym = getRandomElement(hints[variable]);
-
-      console.log((display.getDescriptionText(variable)[0]).cyan);
-      console.log(antonym.green);
-
-      hints[variable].splice(hints[variable].indexOf(antonym), 1);
+    if(globalFlag === 0) {
+      var jumbledWord = scramble(hints.word);
+      console.log('Jumbled word is ', jumbledWord);
+      globalFlag = 1;
       askQuestion(variable, hints);
     } else {
-      variable = 'def';
-      var definition = getRandomElement(hints[variable]);
-
-      console.log((display.getDescriptionText(variable)[0]).cyan);
-      console.log(definition.green);
-
-      hints[variable].splice(hints[variable].indexOf(definition), 1);
+      console.log('No more hints. :)'.green);
+      showAnswer(hints);
+    }
+  } else {
+    if (variable === 'jumble') {
+      var jumbledWord = scramble(hints.word);
+      console.log('Jumbled word is '.cyan, jumbledWord.magenta);
+      globalFlag = 1;
       askQuestion(variable, hints);
+    }
+    if ((variable === 'syn' && hints.syn.length > 0) || 
+      (variable === 'ant' && hints.ant.length > 0) || 
+      (variable === 'def' && hints.def.length > 0)) {
+      showHintsRandomly(variable, hints);
+    } else {
+      setVariableToNoEmptyArray(hints);
     }
   }
 }
 
-function scramble(str) {
-  var scrambled = '';
-  var src = str.split('');
+function setVariableToNoEmptyArray(hints) {
+  for (var key in hints) {
+    if(hints[key].length > 0 && Array.isArray(hints[key])) {
+      showHintsRandomly(key, hints);
+    }
+  }
+}
+
+function showHintsRandomly(variable, hints) {
+  var randomElement = getRandomElement(hints[variable]);
+
+  console.log((display.getDescriptionText(variable)[0]).cyan);
+  console.log(randomElement.green);
+
+  hints[variable].splice(hints[variable].indexOf(randomElement), 1);
+  askQuestion(variable, hints);
+}
+
+function scramble(stringToJumble) {
+  var scrambledWord = '';
+  var arrayOfChars = stringToJumble.split('');
   var randomNum;
 
-  while (src.length > 1) {
-    randomNum = Math.floor(Math.random() * src.length);
-    scrambled += src[randomNum];
-    src.splice(randomNum, 1);
+  while (arrayOfChars.length > 1) {
+    randomNum = Math.floor(Math.random() * arrayOfChars.length);
+    scrambledWord += arrayOfChars[randomNum];
+    arrayOfChars.splice(randomNum, 1);
   }
-  scrambled += src[0];
-  return scrambled;
+  scrambledWord += arrayOfChars[0];
+  return scrambledWord;
 }
 
 function getRandomElement(array) {
@@ -323,7 +331,6 @@ function showAnswer(hints) {
 }
 
 function giveHints(hints) {
-  //deal the functionality
   console.log('Hints:'.blue);
   var keys = ['jumble', 'def', 'syn', 'ant'];
   var hintKey = getRandomElement(keys);
